@@ -64,15 +64,20 @@ IF @SUBSCRIBERS_ROWCOUNT > 0 AND @BREAK != 'true' THEN
                               SET @TODAY_SENDS = ADD(@TODAY_SENDS, 1)
                               IF @TODAY_SENDS > @TODAY_LIMIT THEN
                                    SET @BREAK = 'true'
-                                  RaiseError(Concat("<br/>", 'Today commercial sends over limit!'))
+                                   OutputLine("<br/","Over daily limit!: ", @TODAY_SENDS)
+                                  //RaiseError(Concat("<br/>", 'Today commercial sends over limit!'))
                               ENDIF
-                          ELSEIF NOT EMPTY (@DATE_DIFF_IN_DAYS) AND @DATE_DIFF_IN_DAYS < 7 THEN
+                          ENDIF
+                          
+                          IF NOT EMPTY (@DATE_DIFF_IN_DAYS) AND @DATE_DIFF_IN_DAYS < 7 THEN
                               SET @WEEK_SENDS = ADD(@WEEK_SENDS, 1)
                               IF @WEEK_SENDS > @WEEK_LIMIT THEN
                                   SET @BREAK = 'true'
-                                  RaiseError(Concat("<br/>", 'This week commercial sends over limit!'))
+                                  OutputLine("<br/","Over weekly limit!: ", @WEEK_SENDS)
+                                  //RaiseError(Concat("<br/>", 'This week commercial sends over limit!'))
                               ENDIF
                          ENDIF
+                         
                      ENDIF                       
                           OutputLine(CONCAT("<br/>", @JOBTYPE," -> ", @EVENT_DATE))
                  ENDIF
