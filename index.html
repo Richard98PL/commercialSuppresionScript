@@ -1,0 +1,90 @@
+<script runat="server" language="ampscript">
+  
+//configuration section
+//SET @EMAIL = emailaddr
+SET @EMAIL = 'ryszard.rogalski@britenet.com.pl'
+SET @COMMERCIAL_EMAILS_QUANTITY = 0
+
+SET @TODAY_LIMIT = 1
+SET @WEEK_LIMIT = 3
+//end of configuration section
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+SET @TODAY_SENDS = 0
+SET @WEEK_SENDS = 0
+  
+SET @BREAK = 'false'
+  
+SET @TODAY = SystemDateToLocalDate(Now())
+                            
+SET @SUBSCRIBERS = LookupRows('_Subscribers','EmailAddress', @EMAIL)
+SET @SUBSCRIBERS_ROWCOUNT = ROWCOUNT(@SUBSCRIBERS)                                   
+OutputLine(CONCAT('Taking out subscriberIds by emailaddr'))
+
+IF @SUBSCRIBERS_ROWCOUNT > 0 AND @BREAK != 'true' THEN
+    for @i = 1 to @SUBSCRIBERS_ROWCOUNT do
+        SET @ROW = Row(@SUBSCRIBERS, @i)
+        SET @SUBSCRIBER_ID = FIELD(@ROW, "SubscriberId")
+        OutputLine(CONCAT("<br/>","-------","<br/>",@SUBSCRIBER_ID))
+  
+         SET @SENDS = LookupOrderedRows('_Sent', 200, 'EventDate desc', 'SubscriberId', @SUBSCRIBER_ID)
+         SET @SENDS_ROWCOUNT = ROWCOUNT(@SENDS)
+         IF @SENDS_ROWCOUNT > 0 AND @BREAK != 'true' THEN
+             for @j = 1 to @SENDS_ROWCOUNT do
+                 IF @BREAK != 'true' THEN
+                     SET @ROW = Row(@SENDS, @j)
+                     SET @JOBID = FIELD(@ROW, "JobId")
+                     SET @EVENT_DATE = FIELD(@ROW, "EventDate")
+                 
+                     SET @JOBTYPE = Lookup('_Job',"SendClassificationType","JobId", @JOBID)
+                     IF NOT EMPTY (@JOBTYPE) AND @JOBTYPE == 'Default Commercial' AND @BREAK != 'true' THEN
+                               
+                          SET @DATE_DIFF_IN_DAYS = DateDiff(@EVENT_DATE, @TODAY, 'D') 
+                          SET @COMMERCIAL_EMAILS_QUANTITY = ADD(@COMMERCIAL_EMAILS_QUANTITY, 1)
+                          OutputLine(CONCAT("<br/>"," Date diff in days: ", @DATE_DIFF_IN_DAYS))
+                          
+                          /*IF NOT EMPTY (@DATE_DIFF_IN_DAYS) AND @DATE_DIFF_IN_DAYS > 7 THEN   
+                               SET @BREAK = 'true'  
+                          ENDIF
+                           //We cant do this since subscribers are in random order. We don't know whichSubscriberId when.
+                          */
+                         
+                      
+                          IF NOT EMPTY (@DATE_DIFF_IN_DAYS) AND @DATE_DIFF_IN_DAYS == 0 THEN
+                              SET @TODAY_SENDS = ADD(@TODAY_SENDS, 1)
+                              IF @TODAY_SENDS > @TODAY_LIMIT THEN
+                                   SET @BREAK = 'true'
+                                  RaiseError(Concat("<br/>", 'Today commercial sends over limit!'))
+                              ENDIF
+                          ELSEIF NOT EMPTY (@DATE_DIFF_IN_DAYS) AND @DATE_DIFF_IN_DAYS < 7 THEN
+                              SET @WEEK_SENDS = ADD(@WEEK_SENDS, 1)
+                              IF @WEEK_SENDS > @WEEK_LIMIT THEN
+                                  SET @BREAK = 'true'
+                                  RaiseError(Concat("<br/>", 'This week commercial sends over limit!'))
+                              ENDIF
+                         ENDIF
+                     ENDIF                       
+                          OutputLine(CONCAT("<br/>", @JOBTYPE," -> ", @EVENT_DATE))
+                 ENDIF
+                 
+             next
+         ENDIF
+      
+    next
+ENDIF    
+
+OutputLine(CONCAT("<br/>","Total Commercial Sends for this email address: ", @COMMERCIAL_EMAILS_QUANTITY))
+OutputLine(CONCAT("<br/>","Total Commercial Sends for this email address today (below limit): ", @TODAY_SENDS))
+OutputLine(CONCAT("<br/>","Total Commercial Sends for this email address this week (below limit): ", @WEEK_SENDS))
+
+</script>
