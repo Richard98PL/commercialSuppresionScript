@@ -65,7 +65,7 @@ IF @SUBSCRIBERS_ROWCOUNT > 0 AND @BREAK != 'true' THEN
                               IF @TODAY_SENDS > @TODAY_LIMIT THEN
                                    SET @BREAK = 'true'
                                    OutputLine("<br/","Over daily limit!: ", @TODAY_SENDS)
-                                  //RaiseError(Concat("<br/>", 'Today commercial sends over limit!'))
+                                   RaiseError(Concat("<br/>", 'Today commercial sends over limit!'))
                               ENDIF
                           ENDIF
                           
@@ -74,7 +74,7 @@ IF @SUBSCRIBERS_ROWCOUNT > 0 AND @BREAK != 'true' THEN
                               IF @WEEK_SENDS > @WEEK_LIMIT THEN
                                   SET @BREAK = 'true'
                                   OutputLine("<br/","Over weekly limit!: ", @WEEK_SENDS)
-                                  //RaiseError(Concat("<br/>", 'This week commercial sends over limit!'))
+                                  RaiseError(Concat("<br/>", 'This week commercial sends over limit!'))
                               ENDIF
                          ENDIF
                          
