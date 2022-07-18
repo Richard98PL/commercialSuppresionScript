@@ -1,0 +1,51 @@
+<script runat="server" language="ampscript">
+set @id = GUID()
+set @sentDate = Now()
+/*set @email = emailaddr*/
+set @email = 'ryszard.rogalski@britenet.com.pl'
+  
+set @dailySendsLimit = 1
+set @weeklySendsLimit = 3
+
+set @dailySends = 0
+set @weeklySends = 0
+
+  
+  
+  
+set @rows = LookupOrderedRows('CommercialSends',  @weeklySendsLimit, 'SentDate desc', 'EmailAddress', @email)
+OoutputLine(Concat("<br/>", @rows))
+  
+set @rowCount = RowCount(@rows) 
+IF @rowCount > 0 THEN
+    for @i = 1 to @rowCount do
+      
+        set @row = Row(@rows, @i)
+        set @sentDateField = Field(@row,"SentDate")
+               
+        set @dateDiffInDays = DateDiff(@sentDateField, @sentDate, 'D') 
+        OutputLine(CONCAT("<br/>"," Date diff in days: ", @dateDiffInDays))
+               
+        IF NOT EMPTY (@dateDiffInDays) AND @dateDiffInDays == 0 THEN
+            set @dailySends = Add(@dailySends, 1)
+            IF @dailySends >= @dailySendsLimit THEN
+                OutputLine(Concat("<br/>","Warning! Daily sends limit set to: ", @dailySendsLimit))
+                RaiseError(Concat("<br/>", 'Daily sends limit exceeded!'))
+            ENDIF
+        ENDIF
+               
+        IF NOT EMPTY (@dateDiffInDays) AND @dateDiffInDays < 7 THEN
+             SET @weeklySends = Add(@weeklySends, 1)
+             IF @weeklySends >= @weeklySendsLimit THEN
+                 OutputLine("<br/","Warning! Weekly sends limit set to: ", @weeklySendsLimit)
+                 RaiseError(Concat("<br/>", 'Weekly sends limit exceeded!'))
+             ENDIF
+        ENDIF
+        
+    next @i
+ENDIF
+
+IF _messagecontext == 'SEND' THEN //works only during send anyway
+    set @rowsAdded = InsertDE("CommercialSends","Id", @id,"EmailAddress", @email, "SentDate", @sentDate)
+ENDIF
+</script>
